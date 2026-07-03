@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JEE Commander V4</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --dark-bg: #0b0e14;
+            --card-bg: #161b22;
+            --jee-orange: #ff7b00;
+            --jee-blue: #00a8ff;
+            --jee-green: #3fb950;
+            --jee-red: #ff4d4d;
+            --text-main: #c9d1d9;
+            --text-dim: #8b949e;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--dark-bg); color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--jee-orange); padding-bottom: 10px; }
+        header h1 { font-size: 2.5rem; color: var(--jee-orange); text-transform: uppercase; letter-spacing: 2px; margin: 0; }
+        .quote-box { background: rgba(255, 123, 0, 0.1); border-left: 5px solid var(--jee-orange); padding: 15px; margin-bottom: 20px; text-align: center; font-weight: bold; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        button { background: var(--jee-orange); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        input[type="date"], input[type="number"] { background: #0d1117; color: white; border: 1px solid #30363d; padding: 8px; border-radius: 5px; width: 85%; }
+        .grid-main { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid #30363d; margin-bottom: 20px; }
+        .analysis-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; text-align: center; }
+        .analysis-card { padding: 15px; border-radius: 8px; border: 1px solid #30363d; }
+        .strength-high { color: var(--jee-green); font-weight: bold; font-size: 1.2rem; }
+        .strength-low { color: var(--jee-red); font-weight: bold; font-size: 1.2rem; }
+        .stat-input-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px; }
+        .q-box label { display: block; font-size: 0.75rem; margin-bottom: 5px; color: var(--text-dim); }
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 10px; border-bottom: 1px solid #30363d; }
+        .habit-cat { font-size: 0.7rem; color: var(--jee-blue); display: block; }
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .chart-container { height: 220px; position: relative; }
+        #marks-section { border: 2px solid var(--jee-green); display: none; background: rgba(63, 185, 80, 0.05); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>JEE COMMANDER V4</h1>
+        <p style="font-style: italic; color: var(--text-dim);">"Analyze your past, conquer your future."</p>
+    </header>
+
+    <div class="quote-box" id="target-msg">TARGET STATUS: 180 MARKS.</div>
+
+    <div class="nav-bar">
+        <div>
+            <button onclick="moveDate(-1)">← Prev</button>
+            <input type="date" id="date-selector" onchange="changeDate()">
+            <button onclick="moveDate(1)">Next →</button>
+        </div>
+        <button style="background: var(--jee-blue);" onclick="goToToday()">Today</button>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0; color: var(--jee-blue);">Intelligence Report</h3>
+        <div class="analysis-grid">
+            <div class="analysis-card"><label>Strongest</label><div id="strongest" class="strength-high">---</div></div>
+            <div class="analysis-card"><label>Weakest</label><div id="weakest" class="strength-low">---</div></div>
+            <div class="analysis-card"><label>Efficiency</label><div id="efficiency" style="color:white; font-size:1.2rem;">---</div></div>
+        </div>
+    </div>
+
+    <div id="marks-section" class="card">
+        <h3 style="margin:0; color: var(--jee-green);">Sunday Test Results (Out of 300)</h3>
+        <div class="stat-input-grid">
+            <div class="q-box"><label>Phys</label><input type="number" id="m-phys" oninput="saveData()"></div>
+            <div class="q-box"><label>Chem</label><input type="number" id="m-chem" oninput="saveData()"></div>
+            <div class="q-box"><label>Math</label><input type="number" id="m-math" oninput="saveData()"></div>
+        </div>
+    </div>
+
+    <div class="grid-main">
+        <div class="card">
+            <h3 style="margin:0; color: var(--jee-orange);">Questions & Time</h3>
+            <div class="stat-input-grid">
+                <div class="q-box"><label>P-Qs</label><input type="number" id="q-phys" oninput="saveData()"></div>
+                <div class="q-box"><label>C-Qs</label><input type="number" id="q-chem" oninput="saveData()"></div>
+                <div class="q-box"><label>M-Qs</label><input type="number" id="q-math" oninput="saveData()"></div>
+            </div>
+            <div class="stat-input-grid" style="margin-top:20px;">
+                <div class="q-box"><label>P-Hrs</label><input type="number" id="t-phys" step="0.5" oninput="saveData()"></div>
+                <div class="q-box"><label>C-Hrs</label><input type="number" id="t-chem" step="0.5" oninput="saveData()"></div>
+                <div class="q-box"><label>M-Hrs</label><input type="number" id="t-math" step="0.5" oninput="saveData()"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3 style="margin:0;">Mastery Habits</h3>
+            <table><tbody id="habit-body"></tbody></table>
+        </div>
+    </div>
+
+    <div class="chart-grid">
+        <div class="card"><h4>Study Distribution</h4><div class="chart-container"><canvas id="studyPie"></canvas></div></div>
+        <div class="card"><h4>Habit %</h4><div class="chart-container"><canvas id="habitGraph"></canvas></div></div>
+        <div class="card"><h4>Questions</h4><div class="chart-container"><canvas id="qGraph"></canvas></div></div>
+        <div class="card"><h4>Score vs Target</h4><div class="chart-container"><canvas id="marksGraph"></canvas></div></div>
+    </div>
+</div>
+
+<script>
+    const habits = [
+        { name: "5 AM Club", cat: "Morning Mastery" },
+        { name: "Newton's Apprentice", cat: "Physics Theory" },
+        { name: "Integration King", cat: "Maths Theory" },
+        { name: "Bonding Specialist", cat: "Chemistry Theory" },
+        { name: "Iron Body", cat: "1hr Workout" },
+        { name: "Endurance Engine", cat: "Jogging" },
+        { name: "Intellectual Fuel", cat: "Book Reading" },
+        { name: "Digital Monk", cat: "No Scrolling" },
+        { name: "Clean Fuel", cat: "No Sugar/Junk" },
+        { name: "Mistake Analyzer", cat: "Proof Book Entry" },
+        { name: "Focus Fortress", cat: "Meditation" }
+    ];
+
+    let history = {};
+    try {
+        const saved = localStorage.getItem('jeeV4Data');
+        if (saved) history = JSON.parse(saved);
+    } catch(e) { console.error("Data error", e); }
+
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let charts = {};
+
+    function getTarget(dateStr) { 
+        // Growth formula capped at maximum possible JEE Main marks (300)
+        return Math.min(300, 180 + (new Date(dateStr).getMonth() * 10)); 
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('habit-body');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        const dayHabits = history[selectedDate]?.habits || Array(habits.length).fill(false);
+        habits.forEach((h, i) => {
+            tbody.innerHTML += `<tr><td><b>${h.name}</b><span class="habit-cat">${h.cat}</span></td><td><input type="checkbox" ${dayHabits[i] ? 'checked' : ''} onchange="toggleHabit(${i})"></td></tr>`;
+        });
+    }
+
+    function loadDayData() {
+        const day = history[selectedDate] || { q:{}, t:{}, m:{} };
+        document.getElementById('q-phys').value = day.q?.p || 0;
+        document.getElementById('q-chem').value = day.q?.c || 0;
+        document.getElementById('q-math').value = day.q?.m || 0;
+        document.getElementById('t-phys').value = day.t?.p || 0;
+        document.getElementById('t-chem').value = day.t?.c || 0;
+        document.getElementById('t-math').value = day.t?.m || 0;
+        document.getElementById('m-phys').value = day.m?.p || 0;
+        document.getElementById('m-chem').value = day.m?.c || 0;
+        document.getElementById('m-math').value = day.m?.m || 0;
+
+        document.getElementById('marks-section').style.display = new Date(selectedDate).getDay() === 0 ? 'block' : 'none';
+        document.getElementById('target-msg').innerText = `TARGET STATUS: ${getTarget(selectedDate)} MARKS. NO EXCUSES.`;
+        
+        updateCharts();
+        runAnalysis();
+    }
+
+    function saveData() {
+        if (!history[selectedDate]) history[selectedDate] = { habits: Array(habits.length).fill(false), q: {}, t: {}, m: {} };
+        const d = history[selectedDate];
+        d.q = { p: +document.getElementById('q-phys').value, c: +document.getElementById('q-chem').value, m: +document.getElementById('q-math').value };
+        d.t = { p: +document.getElementById('t-phys').value, c: +document.getElementById('t-chem').value, m: +document.getElementById('t-math').value };
+        d.m = { p: +document.getElementById('m-phys').value, c: +document.getElementById('m-chem').value, m: +document.getElementById('m-math').value };
+        localStorage.setItem('jeeV4Data', JSON.stringify(history));
+        updateCharts();
+        runAnalysis();
+    }
+
+    function toggleHabit(i) {
+        if (!history[selectedDate]) history[selectedDate] = { habits: Array(habits.length).fill(false), q: {}, t: {}, m: {} };
+        history[selectedDate].habits[i] = !history[selectedDate].habits[i];
+        localStorage.setItem('jeeV4Data', JSON.stringify(history));
+        updateCharts();
+    }
+
+    function initCharts() {
+        const opt = { maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: {color: '#30363d'} } } };
+        
+        charts.studyPie = new Chart(document.getElementById('studyPie'), { type: 'pie', data: { labels: ['P', 'C', 'M'], datasets: [{ backgroundColor: ['#00a8ff', '#3fb950', '#ff7b00'], data: [0,0,0] }] } });
+        charts.habitGraph = new Chart(document.getElementById('habitGraph'), { type: 'line', data: { labels: [], datasets: [{ label: 'Habit %', borderColor: '#3fb950', data: [] }] }, options: opt });
+        charts.qGraph = new Chart(document.getElementById('qGraph'), { type: 'line', data: { labels: [], datasets: [{ label: 'P', borderColor: '#00a8ff', data: [] }, { label: 'C', borderColor: '#3fb950', data: [] }, { label: 'M', borderColor: '#ff7b00', data: [] }] }, options: opt });
+        
+        charts.marksGraph = new Chart(document.getElementById('marksGraph'), { 
+            type: 'bar', 
+            data: { labels: [], datasets: [{ label: 'Score', backgroundColor: '#3fb950', data: [] }, { label: 'Target', type: 'line', borderColor: '#ff4d4d', data: [] }] }, 
+            options: { ...opt, scales: { y: { min: 0, max: 300, grid: {color: '#30363d'} } } } 
+        });
+    }
+
+    function updateCharts() {
+        const labels = [], qP = [], qC = [], qM = [], hD = [], mTotal = [], mTarget = [];
+        
+        // Loop timeline builds trailing from selectedDate instead of fixed system date
+        for (let i = 14; i >= 0; i--) {
+            let d = new Date(selectedDate); 
+            d.setDate(d.getDate() - i);
+            let ds = d.toISOString().split('T')[0];
+            labels.push(ds.split('-')[2]);
+            let day = history[ds] || { habits: Array(habits.length).fill(false) };
+            qP.push(day.q?.p || 0); qC.push(day.q?.c || 0); qM.push(day.q?.m || 0);
+            hD.push((day.habits?.filter(Boolean).length / habits.length) * 100 || 0);
+            const score = (day.m?.p || 0) + (day.m?.c || 0) + (day.m?.m || 0);
+            mTotal.push(score); mTarget.push(getTarget(ds));
+        }
+        charts.studyPie.data.datasets[0].data = [history[selectedDate]?.t?.p || 0, history[selectedDate]?.t?.c || 0, history[selectedDate]?.t?.m || 0];
+        charts.studyPie.update();
+        
+        charts.habitGraph.data.labels = labels; charts.habitGraph.data.datasets[0].data = hD; charts.habitGraph.update();
+        charts.qGraph.data.labels = labels; charts.qGraph.data.datasets[0].data = qP; charts.qGraph.data.datasets[1].data = qC; charts.qGraph.data.datasets[2].data = qM; charts.qGraph.update();
+        charts.marksGraph.data.labels = labels; charts.marksGraph.data.datasets[0].data = mTotal; charts.marksGraph.data.datasets[1].data = mTarget; charts.marksGraph.update();
+    }
+
+    function runAnalysis() {
+        let scores = {p:0, c:0, m:0}, testCount = 0;
+        let totalQuestions = 0, totalHours = 0;
+
+        Object.values(history).forEach(day => {
+            // Exam scores calculation
+            if(day.m?.p > 0 || day.m?.c > 0 || day.m?.m > 0) { 
+                scores.p += day.m.p; scores.c += day.m.c; scores.m += day.m.m; 
+                testCount++; 
+            }
+            // Efficiency data aggregation
+            totalQuestions += (day.q?.p || 0) + (day.q?.c || 0) + (day.q?.m || 0);
+            totalHours += (day.t?.p || 0) + (day.t?.c || 0) + (day.t?.m || 0);
+        });
+
+        if(testCount > 0) {
+            const vals = [scores.p/testCount, scores.c/testCount, scores.m/testCount];
+            const subs = ["Physics", "Chemistry", "Maths"];
+            document.getElementById('strongest').innerText = subs[vals.indexOf(Math.max(...vals))];
+            document.getElementById('weakest').innerText = subs[vals.indexOf(Math.min(...vals))];
+        }
+
+        // Display productivity efficiency metric (Q/Hr)
+        if(totalHours > 0) {
+            const rate = (totalQuestions / totalHours).toFixed(1);
+            document.getElementById('efficiency').innerText = `${rate} Q/Hr`;
+        } else {
+            document.getElementById('efficiency').innerText = "---";
+        }
+    }
+
+    function moveDate(n) { let d = new Date(selectedDate); d.setDate(d.getDate()+n); selectedDate = d.toISOString().split('T')[0]; document.getElementById('date-selector').value = selectedDate; loadDayData(); renderTable(); }
+    function goToToday() { selectedDate = new Date().toISOString().split('T')[0]; document.getElementById('date-selector').value = selectedDate; loadDayData(); renderTable(); }
+    function changeDate() { selectedDate = document.getElementById('date-selector').value; loadDayData(); renderTable(); }
+
+    window.onload = () => {
+        document.getElementById('date-selector').value = selectedDate;
+        initCharts();
+        renderTable();
+        loadDayData();
+    };
+</script>
+</body>
+</html>
